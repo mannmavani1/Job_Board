@@ -32,3 +32,7 @@ app.include_router(jobs_router)
 app.include_router(companies_router)
 app.include_router(applications_router)
 app.include_router(tag_router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000)
