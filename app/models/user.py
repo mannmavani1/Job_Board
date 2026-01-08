@@ -1,0 +1,30 @@
+from sqlmodel import SQLModel, Field
+from uuid import UUID, uuid4
+from datetime import datetime
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    recruiter = "recruiter"
+    job_seeker = "job_seeker"
+
+
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: int = Field(default=None, primary_key=True, index=True)
+
+    email: str = Field(
+        nullable=False,
+        unique=True,
+        index=True,
+        max_length=255
+    )
+
+    hashed_password: str = Field(nullable=False)
+
+    role: UserRole = Field(nullable=False)
+
+    is_active: bool = Field(default=True)
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
