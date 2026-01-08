@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlmodel import text
+from sqlmodel import SQLModel, text
 from app.database.db import engine
 from app.routers.auth import router as auth_router
 from app.routers.jobs import router as jobs_router
@@ -9,6 +9,11 @@ from app.routers.tag import router as tag_router
 
 
 app = FastAPI(title="Job Board API")
+
+@app.on_event("startup")
+def on_startup():
+    """Creates database tables when the app starts"""
+    SQLModel.metadata.create_all(engine)
 
 @app.get("/health")
 def health_check():
