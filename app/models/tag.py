@@ -13,6 +13,7 @@ class Tag(SQLModel, table=True):
         index=True,
         max_length=100
     )
+    description: str | None = Field(default=None)
 
 
 class JobTag(SQLModel, table=True):
