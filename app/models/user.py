@@ -12,7 +12,7 @@ class UserRole(str, Enum):
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    id: int = Field(default=None, primary_key=True, index=True)
 
     email: str = Field(
         nullable=False,

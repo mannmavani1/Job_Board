@@ -26,7 +26,7 @@ class ExperienceLevel(str, Enum):
 class Job(SQLModel, table=True):
     __tablename__ = "jobs"
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    id: int = Field(default=None, primary_key=True, index=True)
 
     title: str = Field(nullable=False, index=True, max_length=255)
 
@@ -41,13 +41,13 @@ class Job(SQLModel, table=True):
     salary_min: Optional[int] = Field(default=None)
     salary_max: Optional[int] = Field(default=None)
 
-    recruiter_id: UUID = Field(
+    recruiter_id: int = Field(
         nullable=False,
         foreign_key="users.id",
         index=True
     )
 
-    company_id: UUID = Field(
+    company_id: int = Field(
         nullable=False,
         foreign_key="companies.id",
         index=True

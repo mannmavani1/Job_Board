@@ -7,7 +7,7 @@ from datetime import datetime
 class Company(SQLModel, table=True):
     __tablename__ = "companies"
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    id: int = Field(default=None, primary_key=True, index=True)
 
     name: str = Field(nullable=False, index=True, max_length=255)
 
@@ -17,9 +17,8 @@ class Company(SQLModel, table=True):
 
     location: Optional[str] = Field(default=None, max_length=255)
 
-    recruiter_id: UUID = Field(
+    recruiter_id: int = Field(
         nullable=False,
-        unique=True,
         foreign_key="users.id",
         index=True
     )

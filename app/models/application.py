@@ -16,15 +16,15 @@ class ApplicationStatus(str, Enum):
 class JobApplication(SQLModel, table=True):
     __tablename__ = "job_applications"
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    id: int = Field(default=None, primary_key=True, index=True)
 
-    job_id: UUID = Field(
+    job_id: int = Field(
         nullable=False,
         foreign_key="jobs.id",
         index=True
     )
 
-    job_seeker_id: UUID = Field(
+    job_seeker_id: int = Field(
         nullable=False,
         foreign_key="users.id",
         index=True
