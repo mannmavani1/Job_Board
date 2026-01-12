@@ -97,7 +97,7 @@ def on_startup():
 
 # --- System Health Checks ---
 
-@app.get("/health", tags=["Health"])
+@app.get("/", tags=["Health"])
 def health_check():
     """
     Simple health check endpoint.
@@ -137,3 +137,5 @@ if __name__ == "__main__":
     import uvicorn
     # Run the server programmatically (useful for debugging in IDEs)
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
+
