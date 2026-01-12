@@ -43,21 +43,6 @@ A production-ready RESTful API built with **FastAPI** and **SQLModel**. This pla
 
 ---
 
-## 📂 Project Structure
-
-Job_Board/
-├── app/
-│   ├── core/           # Configuration & Security settings
-│   ├── database/       # Database connection & Session logic
-│   ├── dependencies/   # Auth dependencies & RBAC
-│   ├── models/         # SQLModel Database Tables
-│   ├── routers/        # API Routes (Auth, Jobs, Companies, etc.)
-│   ├── schemas/        # Pydantic Schemas for Request/Response
-│   └── tests.py        # Automated Test Suite
-├── main.py             # Application Entry Point
-├── requirements.txt    # Python Dependencies
-└── README.md           # Project Documentation
-
 ## 🚀 Getting Started
 ### Mac/Linux
 python3 -m venv venv
@@ -79,3 +64,19 @@ DATABASE_URL=""
 ### Run the Application
 
 uvicorn main:app --reload
+
+## 📂 Project Structure
+'''text
+Job_Board/
+├── app/
+│   ├── core/           # Configuration & Security settings
+│   ├── database/       # Database connection & Session logic
+│   ├── dependencies/   # Auth dependencies & RBAC
+│   ├── models/         # SQLModel Database Tables
+│   ├── routers/        # API Routes (Auth, Jobs, Companies, etc.)
+│   ├── schemas/        # Pydantic Schemas for Request/Response
+│   └── tests.py        # Automated Test Suite
+├── main.py             # Application Entry Point
+├── requirements.txt    # Python Dependencies
+└── README.md           # Project Documentation
+
