@@ -36,28 +36,12 @@ A production-ready RESTful API built with **FastAPI** and **SQLModel**. This pla
 ## 🛠️ Tech Stack
 
 * **Framework:** [FastAPI](https://fastapi.tiangolo.com/)
-* **Database:** PostgreSQL (Production) / SQLite (Development)
+* **Database:** PostgreSQL
 * **ORM:** [SQLModel](https://sqlmodel.tiangolo.com/) (SQLAlchemy + Pydantic)
-* **Server:** Uvicorn (Local) / Gunicorn (Production)
-* **Testing:** Pytest & TestClient
+* **Server:** Uvicorn
+* **Testing:** Pytest
 
 ---
-
-## 📂 Project Structure
-
-```text
-Job_Board/
-├── app/
-│   ├── core/           # Configuration & Security settings
-│   ├── database/       # Database connection & Session logic
-│   ├── dependencies/   # Auth dependencies & RBAC
-│   ├── models/         # SQLModel Database Tables
-│   ├── routers/        # API Routes (Auth, Jobs, Companies, etc.)
-│   ├── schemas/        # Pydantic Schemas for Request/Response
-│   └── tests.py        # Automated Test Suite
-├── main.py             # Application Entry Point
-├── requirements.txt    # Python Dependencies
-└── README.md           # Project Documentation
 
 ## 🚀 Getting Started
 ### Mac/Linux
@@ -80,3 +64,19 @@ DATABASE_URL=""
 ### Run the Application
 
 uvicorn main:app --reload
+
+## 📂 Project Structure
+```text
+Job_Board/
+├── app/
+│   ├── core/           # Configuration & Security settings
+│   ├── database/       # Database connection & Session logic
+│   ├── dependencies/   # Auth dependencies & RBAC
+│   ├── models/         # SQLModel Database Tables
+│   ├── routers/        # API Routes (Auth, Jobs, Companies, etc.)
+│   ├── schemas/        # Pydantic Schemas for Request/Response
+│   └── tests.py        # Automated Test Suite
+├── main.py             # Application Entry Point
+├── requirements.txt    # Python Dependencies
+└── README.md           # Project Documentation
+
