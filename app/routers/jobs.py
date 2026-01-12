@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session, select
-from uuid import UUID
 from datetime import datetime
 
 from app.database.session import get_session
@@ -62,11 +61,7 @@ def create_job(
     return job
 
 
-# =========================
-# LIST JOBS (Public)
-# =========================
-
-@router.get("")
+@router.get("",status_code=status.HTTP_200_OK)
 def search_jobs(
     q: str | None = Query(default=None, description="Search by job title"),
     location: str | None = None,
@@ -121,7 +116,8 @@ def search_jobs(
 # GET JOB DETAILS
 # =========================
 
-@router.get("/{job_id}", response_model=JobResponse)
+@router.get("/{job_id}", response_model=JobResponse,status_code=
+status.HTTP_200_OK)
 def get_job(
     job_id: int,
     session: Session = Depends(get_session)
@@ -134,11 +130,8 @@ def get_job(
     return job
 
 
-# =========================
-# UPDATE JOB (Owner only)
-# =========================
 
-@router.put("/{job_id}", response_model=JobResponse)
+@router.put("/{job_id}", response_model=JobResponse,status_code=status.HTTP_200_OK)
 def update_job(
     job_id: int,
     data: JobUpdateRequest,
@@ -165,9 +158,7 @@ def update_job(
     return job
 
 
-# =========================
-# DELETE JOB (Owner only)
-# =========================
+
 
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_job(
@@ -190,14 +181,14 @@ def delete_job(
 
 @router.get(
     "/{job_id}/applications",
-    response_model=list[RecruiterApplicationResponse]
+    response_model=list[RecruiterApplicationResponse],status_code=status.HTTP_200_OK
 )
 def get_job_applications(
     job_id: int,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    # Role check
+ 
     if current_user.role != "recruiter":
         raise HTTPException(
             status_code=403,
@@ -224,7 +215,7 @@ def get_job_applications(
 
 @router.post(
     "/{job_id}/tags",
-    status_code=201
+    status_code=status.HTTP_201_CREATED
 )
 def attach_tags_to_job(
     job_id: int,

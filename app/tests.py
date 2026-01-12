@@ -5,7 +5,7 @@ from sqlmodel.pool import StaticPool
 
 # --- IMPORTS ---
 # Ensure you run this from the project root using: python -m pytest app/tests.py
-from app.main import app
+from main import app
 from app.database.session import get_session
 
 # ==========================================

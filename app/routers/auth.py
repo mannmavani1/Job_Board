@@ -1,5 +1,3 @@
-# app/routers/auth.py
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from app.dependencies.auth import get_current_user
@@ -63,7 +61,8 @@ def register_user(
 
 @router.post(
     "/login",
-    response_model=TokenResponse
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK
 )
 def login_user(
     data: UserLoginRequest,
@@ -88,6 +87,6 @@ def login_user(
 
     return TokenResponse(access_token=access_token)
 
-@router.get("/me")
+@router.get("/me", status_code=status.HTTP_200_OK)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user

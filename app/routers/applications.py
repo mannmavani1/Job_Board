@@ -80,7 +80,8 @@ def apply_to_job(
 
 @router.get(
     "/me",
-    response_model=list[JobApplicationResponse]
+    response_model=list[JobApplicationResponse],
+    status_code=status.HTTP_200_OK
 )
 def my_applications(
     session: Session = Depends(get_session),
@@ -100,7 +101,8 @@ def my_applications(
 
 @router.put(
     "/{application_id}",
-    response_model=JobApplicationResponse
+    response_model=JobApplicationResponse,
+    status_code=status.HTTP_200_OK
 )
 def update_application(
     application_id: int,
@@ -176,7 +178,7 @@ def withdraw_application(
     session.delete(application)
     session.commit()
 
-    return None
+    return {"detail": "Application withdrawn successfully"}
 
 
 
