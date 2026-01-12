@@ -66,7 +66,7 @@ DATABASE_URL=""
 uvicorn main:app --reload
 
 ## 📂 Project Structure
-'''text
+```text
 Job_Board/
 ├── app/
 │   ├── core/           # Configuration & Security settings
