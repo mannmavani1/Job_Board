@@ -35,6 +35,17 @@ def create_company(
             status_code=403,
             detail="Only recruiters can create companies"
         )
+    
+    if data.name:
+        existing_company = session.exec(
+            select(Company).where(Company.name == data.name)
+        ).first()
+
+        if existing_company:
+            raise HTTPException(
+                status_code=400,
+                detail="Company with this name already exists"
+            )
 
     company = Company(
         name=data.name,
@@ -55,7 +66,7 @@ def create_company(
 
 
 
-@router.get("", response_model=list[CompanyResponse])
+@router.get("", response_model=list[CompanyResponse], status_code=status.HTTP_200_OK)
 def list_companies(
     session: Session = Depends(get_session)
 ):
@@ -63,7 +74,7 @@ def list_companies(
 
 
 
-@router.get("/{company_id}", response_model=CompanyResponse)
+@router.get("/{company_id}", response_model=CompanyResponse,status_code=status.HTTP_200_OK)
 def get_company(
     company_id: int,
     session: Session = Depends(get_session)
@@ -76,11 +87,7 @@ def get_company(
     return company
 
 
-# =========================
-# UPDATE COMPANY (Owner only)
-# =========================
-
-@router.put("/{company_id}", response_model=CompanyResponse)
+@router.put("/{company_id}", response_model=CompanyResponse, status_code=status.HTTP_200_OK)
 def update_company(
     company_id: int,
     data: CompanyUpdateRequest,
@@ -108,7 +115,7 @@ def update_company(
 
     return company
 
-@router.delete("/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{company_id}")
 def delete_company(
     company_id: int,
     session: Session = Depends(get_session),
@@ -127,4 +134,5 @@ def delete_company(
 
     session.delete(company)
     session.commit()
-    return  {"detail": "Company deleted successfully"}
+
+    return {"detail": "Company deleted successfully"}
