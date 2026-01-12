@@ -36,10 +36,10 @@ A production-ready RESTful API built with **FastAPI** and **SQLModel**. This pla
 ## 🛠️ Tech Stack
 
 * **Framework:** [FastAPI](https://fastapi.tiangolo.com/)
-* **Database:** PostgreSQL (Production) / SQLite (Development)
+* **Database:** PostgreSQL
 * **ORM:** [SQLModel](https://sqlmodel.tiangolo.com/) (SQLAlchemy + Pydantic)
-* **Server:** Uvicorn (Local) / Gunicorn (Production)
-* **Testing:** Pytest & TestClient
+* **Server:** Uvicorn
+* **Testing:** Pytest
 
 ---
 
