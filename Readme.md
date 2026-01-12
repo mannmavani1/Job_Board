@@ -45,7 +45,6 @@ A production-ready RESTful API built with **FastAPI** and **SQLModel**. This pla
 
 ## 📂 Project Structure
 
-```text
 Job_Board/
 ├── app/
 │   ├── core/           # Configuration & Security settings
