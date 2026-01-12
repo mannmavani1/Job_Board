@@ -138,3 +138,4 @@ def get_me(current_user: User = Depends(get_current_user)):
     - User: The full user object of the logged-in user.
     """
     return current_user
+
