@@ -1,11 +1,13 @@
 import logging
 import time
-from fastapi import FastAPI, Request
-from sqlmodel import SQLModel, text
+from fastapi import Depends, FastAPI, Request
+from sqlmodel import SQLModel, Session, select, text
 from fastapi.middleware.cors import CORSMiddleware
 
 # Database and Router Imports
 from app.database.db import engine
+from app.database.session import get_session
+from app.models.user import User
 from app.routers.auth import router as auth_router
 from app.routers.jobs import router as jobs_router
 from app.routers.companies import router as companies_router
@@ -123,6 +125,22 @@ def db_check():
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
         return {"database": "disconnected", "error": str(e)}
+    
+@app.get("/users", tags=["Users"])
+def get_all_users(
+    session: Session = Depends(get_session)
+):
+    """
+    Retrieve a list of all registered users.
+
+    **Returns:**
+    - list[User]: A list of all user objects in the system.
+
+    """
+    
+    
+    users = session.exec(select(User)).all()
+    return users
 
 
 # --- Router Registration ---

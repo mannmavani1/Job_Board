@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from typing import Optional
 from datetime import datetime
@@ -26,3 +26,7 @@ class CompanyResponse(BaseModel):
     location: Optional[str]
     recruiter_id: int
     created_at: datetime
+
+class AddRecruiterRequest(BaseModel):
+    email: EmailStr
+    password: Optional[str]= None

@@ -65,3 +65,26 @@ class Company(SQLModel, table=True):
         sa_column_kwargs={"onupdate": utc_now},
         description="Timestamp of the last update. Automatically updates on DB write."
     )
+
+class CompanyRecruiterLink(SQLModel, table=True):
+    """
+    Link table (Association Model) for the Many-to-Many relationship 
+    between Companies and Recruiters.
+
+    **Composite Primary Key:**
+    - The combination of `company_id` and `recruiter_id` serves as the primary key.
+    - This ensures a specific recruiter can only be linked to a specific company once.
+    """
+    __tablename__ = "company_recruiter_links"
+
+    company_id: int = Field(
+        foreign_key="companies.id",
+        primary_key=True,
+        description="ID of the Company."
+    )
+
+    recruiter_id: int = Field(
+        foreign_key="users.id",
+        primary_key=True,
+        description="ID of the Recruiter (User)."
+    )
