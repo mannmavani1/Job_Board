@@ -26,12 +26,18 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 
+GROQ_API_KEY=os.getenv("GROQ_API_KEY")
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
+
 # --- Critical Validation ---
 # We raise errors immediately if essential secrets are missing.
 # This prevents the application from starting in a broken state.
 
 if not DATABASE_URL:
     raise ValueError("CRITICAL ERROR: 'DB_URL' environment variable is not set.")
+
+if not GROQ_API_KEY:
+    raise ValueError("CRITICAL ERROR: 'GROQ_API_KEY' environment variable is not set.")
 
 if not JWT_SECRET_KEY:
     raise ValueError("CRITICAL ERROR: 'JWT_SECRET_KEY' environment variable is not set.")
