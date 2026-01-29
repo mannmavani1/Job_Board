@@ -73,3 +73,40 @@ def ask_ai(request: AIQueryRequest):
         return {"answer": result["result"]}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.post("/recommend-jobs", status_code=status.HTTP_200_OK)
+def recommend_jobs(request: JobRecommendationRequest):
+    try:
+        llm = get_llm(temperature=0.0)
+        vector_store = get_vector_store()
+        docs = vector_store.similarity_search(request.resume_text, k=1)
+
+        recommendations = []
+        for doc in docs:
+            job_id = doc.metadata.get("id")
+            job_content = doc.page_content
+
+            prompt = f"""
+        Analyze the fit between a candidate and a job.
+        
+        Candidate Profile Summary: {request.resume_text[:1000]}...
+        Job Details: {job_content}
+        
+        Explain briefly (1 sentence) why this candidate is a good match and give a match percentage.
+        Format: "Reason | Percentage"
+        """
+            try:
+                response = llm.invoke(prompt).content
+                recommendations.append({
+                    "job_id": job_id,
+                    "job_content": job_content,
+                    "ai_analysis": response
+                })
+            except Exception as e:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+        return {"recommendations": recommendations}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
