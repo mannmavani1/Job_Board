@@ -37,3 +37,39 @@ def sync_vectors(session: Session = Depends(get_session)):
         return {"message": "Vectors synced successfully"}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("ask-ai")
+def ask_ai(request: AIQueryRequest):
+    try:
+        llm = get_llm(temperature=0.0)
+        vector_store = get_vector_store()
+        retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+        template = """
+    You are a helpful assistant for a Job Board. 
+    Use the following pieces of context (Job Listings) to answer the user's question.
+    If you don't know the answer, just say you don't know. Do not make up jobs.
+    
+    Context:
+    {context}
+    
+    Question: {question}
+    
+    Answer:
+    """
+
+    
+        QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
+
+        qa_chain = RetrievalQA.from_chain_type(
+        llm,
+        retriever=retriever,
+        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    )
+
+    
+        result = qa_chain.invoke({"query": request.query})
+
+        return {"answer": result["result"]}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
