@@ -110,3 +110,60 @@ def recommend_jobs(request: JobRecommendationRequest):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.post("/improve-job-description", response_model=JobDescriptionImprovementResponse)
+def improve_job_description(request: JobDescriptionImprovementRequest):
+    try:
+        llm = get_llm(temperature=0.7)
+
+
+        base_instruction = (
+        "You are an expert Technical Recruiter and Copywriter. "
+        "Your goal is to rewrite the provided job description. "
+        "Fix all grammar issues. "
+        f"Ensure the content is optimized for SEO targeting the job title: '{request.title}'. "
+        )
+        if request.mode == "short":
+            specific_instruction = (
+            "STYLE: Short, crisp, and scannable.\n"
+            "- Use bullet points heavily.\n"
+            "- Remove generic corporate fluff.\n"
+            "- Keep sentences under 15 words.\n"
+            "- Focus on 'Must Haves' vs 'Nice to Haves'."
+            )
+        elif request.mode == "marketing":
+            specific_instruction = (
+            "STYLE: Engaging, exciting, and candidate-centric.\n"
+            "- Use an energetic and welcoming tone.\n"
+            "- Highlight growth opportunities and company culture.\n"
+            "- Use persuasive language to attract top talent."
+            )
+        else:
+            specific_instruction = (
+            "STYLE: Professional, corporate, and comprehensive.\n"
+            "- Use formal business English.\n"
+            "- Structure with clear headers: 'About the Role', 'Key Responsibilities', 'Requirements'.\n"
+            "- Ensure clarity on deliverables."
+            )
+
+        prompt = f"""
+        {base_instruction}
+        {specific_instruction}
+    
+         ---
+        ORIGINAL DESCRIPTION:
+        {request.description}
+        ---
+    
+        OUTPUT (Return ONLY the improved description text):
+        """
+
+        response = llm.invoke(prompt)
+
+        return {
+        "original_description": request.description,
+        "improved_description": response.content,
+        "improvement_mode": request.mode
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) 
