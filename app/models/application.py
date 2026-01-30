@@ -1,6 +1,8 @@
 from sqlmodel import SQLModel, Field
 from datetime import datetime, timezone
 from enum import Enum
+from typing import List, Optional
+from sqlalchemy import JSON, Column
 
 def utc_now():
     """Helper to get current UTC time (timezone-aware)."""
@@ -51,6 +53,12 @@ class JobApplication(SQLModel, table=True):
         nullable=False, 
         max_length=500,
         description="URL to the applicant's resume (e.g., S3 or public link)."
+    )
+    
+    skills: List[str] = Field(
+        default=[],
+        sa_column=Column(JSON),
+        description="List of skills possessed by the applicant."
     )
 
     cover_letter: str | None = Field(

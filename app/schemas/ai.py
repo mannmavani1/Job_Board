@@ -9,7 +9,7 @@ class JobRecommendationRequest(BaseModel):
     resume_text: str = Field(..., description="The resume text to use for job recommendation.")
 
 class JobRecommendationResponse(BaseModel):
-    resume_text: str = Field(..., description="The resume text to use for job recommendation.")
+    recommendations: str = Field(..., description="The resume text to use for job recommendation.")
 
 class ImprovementMode(str,Enum):
     short="short"
@@ -26,4 +26,5 @@ class JobDescriptionImprovementRequest(BaseModel):
     description: str = Field(..., description="The description of the job.")
     mode: ImprovementMode = Field(..., description="The improvement mode.")
 
-    
+class ToolInput(BaseModel):
+    query: Optional[str] = Field(default="", description="Input argument for the tool (search term, message, etc).")

@@ -14,6 +14,7 @@ from app.routers.companies import router as companies_router
 from app.routers.applications import router as applications_router
 from app.routers.tag import router as tag_router
 from app.routers.ai import router as ai_router
+from fastapi import HTTPException
 """
 Application Entry Point.
 
@@ -141,6 +142,30 @@ def get_all_users(
     
     users = session.exec(select(User)).all()
     return users
+
+@app.get("/users/{user_id}",tags=["Users"])
+def get_user_by_id(
+    user_id: str,
+    session: Session = Depends(get_session)
+):
+    """
+    Retrieve a specific user by their unique ID.
+
+    **Args:**
+    - user_id (int): The primary key of the user to retrieve.
+
+    **Returns:**
+    - User: The user object if found.
+
+    **Raises:**
+    - 404 Not Found: If no user exists with the provided ID.
+    """
+
+    user = session.exec(select(User).where(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return user
 
 
 # --- Router Registration ---

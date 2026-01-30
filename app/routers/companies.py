@@ -279,7 +279,7 @@ def add_recruiter_to_company(
     ).first()
 
     if not recruiter:
-        if not data.password or not data.name:
+        if not data.password:
             raise HTTPException(
                 status_code=404,
                 detail="Recruiter not found. To create a new recruiter, please provide password."
@@ -289,7 +289,6 @@ def add_recruiter_to_company(
             email=data.email,
             hashed_password=get_password_hash(data.password),
             role="recruiter",
-            name=data.name,
             is_active=True,
             created_at=datetime.utcnow()
         )

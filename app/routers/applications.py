@@ -83,6 +83,7 @@ def apply_to_job(
     application = JobApplication(
         job_id=job_id,
         job_seeker_id=current_user.id,
+        skills=data.skills,
         resume_url=data.resume_url,
         cover_letter=data.cover_letter,
         applied_at=datetime.utcnow()

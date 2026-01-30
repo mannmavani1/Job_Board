@@ -2,10 +2,13 @@ import os
 import shutil
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from numpy.random import f
 from sqlmodel import Session,select
 from app.models.job import Job
 from app.models.company import Company
+from app.models.application import JobApplication
 from app.ai.llm import get_embeddings
+from app.models.user import User
 
 PERSIST_DIR = "./chroma_db"
 
@@ -48,7 +51,8 @@ def sync_jobs_to_vector_store(session: Session):
             f"Job Type: {job.job_type}\n"
             f"Job Experience Level: {job.experience_level}\n"
             f"Job Salary Range: {job.salary_min} - {job.salary_max}\n"
-           
+            f"Job Id: {job.id}\n"
+            f"Company ID: {job.company_id}\n"
             f"Job Description: {job.description}\n"
         )
 
@@ -61,9 +65,9 @@ def sync_jobs_to_vector_store(session: Session):
 
         documents.append(Document(page_content=page_content, metadata=metadata))
 
-        vector_store.add_documents(documents)
+    vector_store.add_documents(documents)
 
-        print(f"Synced {len(jobs)} active jobs to ChromaDB.")
+    print(f"Synced {len(jobs)} active jobs to ChromaDB.")
 
 def sync_companies_to_vector_store(session: Session):
     vector_store = get_vector_store()
@@ -93,6 +97,78 @@ def sync_companies_to_vector_store(session: Session):
 
         documents.append(Document(page_content=page_content, metadata=metadata))
 
-        vector_store.add_documents(documents)
+    vector_store.add_documents(documents)
 
-        print(f"Synced {len(companies)} companies to ChromaDB.")
+    print(f"Synced {len(companies)} companies to ChromaDB.")
+
+def sync_applications_to_vector_store(session: Session):
+    vector_store = get_vector_store()
+
+
+    ja = session.exec(select(JobApplication)).all()
+
+    if not ja:
+        print("No Job Applications found in the database.")
+        return
+        
+    documents = []
+    print(f"Found {len(ja)} Job Applications to sync. Syncing to ChromaDB...")
+
+    for joba in ja:
+
+        page_content = (
+            f"Job_seeker_id: {joba.job_seeker_id}\n"
+            f"Resume Url: {joba.resume_url}\n"
+            f"Cover Letter: {joba.cover_letter}\n"
+            f"Skills: {', '.join(joba.skills) if joba.skills else 'None'}\n"
+            f"Application Status: {joba.status}\n"
+        )
+
+        metadata = {
+            "id": joba.id,
+            "job_seeker_id": joba.job_seeker_id,
+            "job_id": joba.job_id,
+            "type": "Job Application"
+        }
+
+        documents.append(Document(page_content=page_content, metadata=metadata))
+
+  
+    vector_store.add_documents(documents)
+
+    print(f"Successfully synced {len(ja)} Job Applications to ChromaDB.")
+
+def sync_users_to_vector_store(session: Session):
+    vector_store = get_vector_store()
+
+
+    users = session.exec(select(User)).all()
+
+    if not users:
+        print("No Users found in the database.")
+        return
+        
+    documents = []
+    print(f"Found {len(users)} Users to sync. Syncing to ChromaDB...")
+
+    for user in users:
+
+        page_content = (
+            f"email : {user.email}"
+            f"role : {user.role}"
+            f"is_active : {user.is_active}"
+            f"user_id:{user.id}"
+            
+        )
+
+        metadata = {
+            "id": user.id,
+            "type": "User"
+        }
+
+        documents.append(Document(page_content=page_content, metadata=metadata))
+
+  
+    vector_store.add_documents(documents)
+
+    print(f"Successfully synced {len(users)} Job Applications to ChromaDB.")

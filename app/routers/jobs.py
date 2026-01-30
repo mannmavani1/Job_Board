@@ -270,8 +270,7 @@ def delete_job(
 )
 def get_job_applications(
     job_id: int,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    session: Session = Depends(get_session)
 ):
     """
     Retrieve all applications for a specific job.
@@ -287,23 +286,12 @@ def get_job_applications(
     - list[RecruiterApplicationResponse]: List of applications (includes applicant details).
     """
     
-    # Role Check
-    if current_user.role != "recruiter":
-        raise HTTPException(
-            status_code=403,
-            detail="Only recruiters can view job applications"
-        )
-
+   
     job = session.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Ownership check
-    if job.recruiter_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Not authorized to view applications for this job"
-        )
+    
 
     applications = session.exec(
         select(JobApplication)
