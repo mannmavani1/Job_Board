@@ -4,6 +4,7 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from sqlmodel import Session,select
 from app.models.job import Job
+from app.models.company import Company
 from app.ai.llm import get_embeddings
 
 PERSIST_DIR = "./chroma_db"
@@ -63,3 +64,35 @@ def sync_jobs_to_vector_store(session: Session):
         vector_store.add_documents(documents)
 
         print(f"Synced {len(jobs)} active jobs to ChromaDB.")
+
+def sync_companies_to_vector_store(session: Session):
+    vector_store = get_vector_store()
+
+    companies = session.exec(select(Company)).all()
+
+    if not companies:
+        print("No companies found in the database.")
+        return
+    documents = []
+    print(f"Found {len(companies)} companies to sync. Syncing to ChromaDB...")
+
+    for company in companies:
+
+        page_content = (
+            f"Company Name: {company.name}\n"
+            f"Company Description: {company.description}\n"
+            f"Company Website: {company.website}\n"
+            f"Company Location: {company.location}\n"
+        )
+
+        metadata = {
+            "id": company.id,
+            "type": "company",
+            "location": company.location
+        }
+
+        documents.append(Document(page_content=page_content, metadata=metadata))
+
+        vector_store.add_documents(documents)
+
+        print(f"Synced {len(companies)} companies to ChromaDB.")

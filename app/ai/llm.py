@@ -1,6 +1,6 @@
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
-from core.config import GROQ_API_KEY,EMBEDDING_MODEL_NAME
+from app.core.config import GROQ_API_KEY,EMBEDDING_MODEL_NAME
 
 def get_llm(temperature=0.0):
     """

@@ -13,7 +13,7 @@ from app.routers.jobs import router as jobs_router
 from app.routers.companies import router as companies_router
 from app.routers.applications import router as applications_router
 from app.routers.tag import router as tag_router
-
+from app.routers.ai import router as ai_router
 """
 Application Entry Point.
 
@@ -149,7 +149,7 @@ app.include_router(jobs_router)
 app.include_router(companies_router)
 app.include_router(applications_router)
 app.include_router(tag_router)
-
+app.include_router(ai_router)
 
 if __name__ == "__main__":
     import uvicorn
