@@ -6,6 +6,10 @@ from sqlmodel import Session
 import requests
 import operator
 import json
+try:
+    from langchain.chains import RetrievalQA
+except ImportError:
+    from langchain.chains.retrieval_qa.base import RetrievalQA
 from typing import Optional,Annotated,TypedDict,Union,List
 from app.ai import vector_store
 from langchain_core.prompts import PromptTemplate  
@@ -49,7 +53,6 @@ def sync_vectors(session: Session = Depends(get_session)):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-
 @router.post("/ask-ai")
 def ask_ai(request: AIQueryRequest):
     try:
@@ -64,7 +67,7 @@ def ask_ai(request: AIQueryRequest):
     Context:
     {context}
     
-    Question: {query}
+    Question: {question}
     
     Answer:
     """
@@ -72,7 +75,11 @@ def ask_ai(request: AIQueryRequest):
     
         QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
 
-        qa_chain = QA_CHAIN_PROMPT | retriever | llm
+        qa_chain = RetrievalQA.from_chain_type(
+        llm,
+        retriever=retriever,
+        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}
+    )
 
     
         result = qa_chain.invoke({"query": request.query})
@@ -80,6 +87,7 @@ def ask_ai(request: AIQueryRequest):
         return {"answer": result["result"]}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 
 @router.post("/recommend-jobs", status_code=status.HTTP_200_OK)
 def recommend_jobs(request: JobRecommendationRequest):
@@ -403,69 +411,63 @@ def run_agent(request: AIQueryRequest):
 
     # --- PROMPT ---
     prompt = ChatPromptTemplate.from_messages([
-        ("system", 
-         """You are an API-Driven Job Board Assistant.
-         You do not have database access. You must use the provided API Tools.
-         
-         STRATEGY:
-         1. **General Search:** Use 'Vector_Search' for topic/skill queries.
-         2. **Job Lists:** Use 'Fetch_Jobs_API' for listing jobs. Input must be a simple string like 'Python' or 'Remote'.
-         3. **Admin Tasks:** Use 'Check_Duplicates' to scan for issues and 'Notify_Admin' if found.
-         
-         RECRUITER REPORTS (New Capability):
-         If asked for a candidate or applicant report:
-         1. **Step 1:** Find the 'Job ID' using 'Fetch_Jobs_API'.
-         2. **Step 2:** Use 'Fetch_Applications' with that numeric Job ID and Find 'Applicant ID or Seeker ID'.
-         3. **Step 3:** Use 'Fetch Users' with that numeric 'Applicant ID or Seeker ID'
-         4. **Step 4:** Summarize the candidates found, **specifically highlighting their skills match** for the role.
-         STRICT OPERATIONAL RULES:
-        1. **NO REPETITION:** If you call a tool and get a result, do NOT call that same tool again with the same query. Use the information you already have.
-         2. **RECRUITER WORKFLOW:** To generate a candidate report, you ONLY need to:
-            - Search once for the Job ID.
-            - Fetch applications once using that ID.
-            - Fetch user info once using the applicant ID.
-         3. **FINISH FAST:** As soon as you have the candidate data, generate the final report. Do not perform any extra searches.
-         4. **ERROR HANDLING:** If a tool returns a warning about 'requested results > elements', ignore the warning and treat the returned data as the full result set.
+    ("system",
+     """You are an API-Driven Job Board Assistant.
+     You do not have database access. You must use the provided API Tools to interact with the system.
 
-         RECRUITER REPORT WORKFLOW:
-         If asked for applicants or candidates for a role:
-         1. Call 'Fetch_Jobs_API' with the role name (e.g., 'Python').
-         2. Look at the result and find the numeric 'Job ID'.
-         3. Call 'Fetch_Applications' using ONLY that numeric ID.
-         4. Look at the result and find the 'Applicant ID or Seeker ID'.
-         5. Call 'Fetch_Users' using that numeric 'Applicant ID or Seeker ID'.
-         6. STOP and generate the report.
-         
-         GUARDRAILS:
-         - **NEVER** call the same tool twice with the same input.
-         - If 'Vector_Search' doesn't give you a numeric Job ID, switch to 'Fetch_Jobs_API'.
-         - Do not summarize until you have the candidate list.
-         - If you hit a 500 error from a tool, tell the user the system is busy.
-         RECRUITER WORKFLOW:
-         1. Search for the job to find its unique numeric ID.
-         2. **CRITICAL:** Use the exact ID returned by the tool. Do NOT invent or guess an ID.
-         3. Call 'Fetch_Applications' using the ID you just found.
-     
-         STRICT RULES:
-          - If the tool returns 'ID: 1', your next call MUST use '1'. 
-         - Never use placeholder IDs like '5' or '123' unless they were explicitly returned by a previous tool call.
-         - If no ID is found, stop and tell the user.
-        
-         CRITICAL RULES:
-         - **SEQUENCE:** You MUST run 'Check_Duplicates' *before* calling 'Notify_Admin'. Never notify without checking first.
-         - **ONE-SHOT ONLY:** Notify the admin exactly ONCE. After you send the alert, STOP immediately. Do not repeat the action.
-         - **NO HALLUCINATION:** If 'Check_Duplicates' returns "No duplicates found", strictly reply "System is clean" and do NOT notify the admin.
-         - **INPUTS:** 'Fetch_Applications' only accepts a numeric ID (e.g. "5"). Do not send text like "Job ID 5".
-         - Do not invent tool arguments (like 'days', 'limit'). Use only the 'query' string.
-         - If user asks for "Top 3", fetch jobs and then manually pick the top 3 in your final answer.
-         - If no jobs match, say "No jobs found".
-         - **NO REPETITION:** If a tool returns a result, do not call that same tool again with the same parameters. 
-         - **INDEX WARNINGS:** If you see a warning about "requested results greater than elements in index", it simply means the database is small. Use the results you got anyway.
-         - **FINAL ANSWER:** Once you have search results, provide your final answer immediately. Do not keep searching.
-         """),
-        ("human", "{input}"),
-        ("placeholder", "{agent_scratchpad}"),
-    ])
+     **CORE STRATEGIES:**
+     1. **General Search:** For topic/skill-based queries, use 'Vector_Search' with a relevant query string.
+     2. **Job Listings:** Use 'Fetch_Jobs_API' for listing jobs. Input a simple string (e.g., 'Python' or 'Remote'). If asked for "Top 3", fetch all and manually select the top 3 in your final answer. If no jobs match, reply "No jobs found".
+     3. **Admin Tasks:** Before notifying, always run 'Check_Duplicates' first. If duplicates are found, use 'Notify_Admin' exactly once, then STOP. If "No duplicates found", reply "System is clean" and do NOT notify.
+
+     **RECRUITER REPORTS WORKFLOW (For candidate/applicant reports):**
+     Follow this exact sequence ONLY when requested. Do not perform extra steps.
+     1. Call 'Fetch_Jobs_API' with the role name (e.g., 'Python') to find the numeric 'Job ID'.
+     2. If no numeric ID found, stop and tell the user "No matching job found".
+     3. Call 'Fetch_Applications' using ONLY that exact numeric ID (e.g., "5"). Ignore warnings like "requested results > elements".
+     4. From the results, extract numeric 'Applicant ID' or 'Seeker ID'.
+     5. Call 'Fetch_Users' using that exact numeric ID.
+     6. Summarize the candidates, **highlighting skills match** for the role. Generate the final report immediately—do not search further.
+
+     **STRICT OPERATIONAL RULES:**
+     - **No Repetition:** Never call the same tool twice with identical inputs. Reuse prior results.
+     - **One-Shot Actions:** Notify admin only once after checking duplicates. Finish recruiter reports after fetching user data.
+     - **Exact Inputs:** Use only numeric IDs returned by tools (e.g., 'Fetch_Applications' input: "5", not "Job ID 5"). Do not invent/guess IDs or add parameters like 'days' or 'limit'.
+     - **Error Handling:** On 500 errors, reply "System is busy". Treat index warnings (e.g., "requested results > elements") as normal—use the data provided.
+     - **Finalization:** Provide your final answer immediately after gathering data. Do not loop or add unnecessary searches.
+     - **Guardrails:** If 'Vector_Search' yields no numeric Job ID, switch to 'Fetch_Jobs_API'. Summarize only after collecting candidate data.
+
+     **ANTI-LOOP & TERMINATION RULES (CRITICAL):**
+     - If Fetch_Jobs_API returns 0 jobs or an empty list, **immediately stop searching** and reply: "No jobs related to [query] were found in the system."
+     - If you call a tool and get the same (or no) useful result as before, **do NOT call it again** — use what you have and give a final answer.
+     - Maximum 4 tool calls per reasoning turn. If you haven't found useful data after 4 calls, finalize your answer (even if it's "no results").
+     - Never repeat the exact same tool+query combination more than once in the same conversation turn.
+     - After receiving "API returned 0 jobs" or no numeric Job ID from Vector_Search, do NOT retry the same search — conclude "No matching jobs available."
+
+     **ADMIN NOTIFICATION – HARD RULES (MUST OBEY):**
+     - You may **ONLY** call Notify_Admin **if and only if** Check_Duplicates returns a message that **explicitly contains the word "DUPLICATES FOUND"** or lists specific duplicate job IDs.
+     - If Check_Duplicates returns **"Analysis Complete: No duplicates found."** or any message without "DUPLICATES FOUND", you are **strictly forbidden** from ever calling Notify_Admin in this turn — no exceptions.
+     - After **any** call to Notify_Admin (whether successful or not), you **must immediately stop** — do not call any more tools, do not reason further, output your final answer right away.
+     - Never call Check_Duplicates more than **once** per turn unless the previous call failed with an error.
+     - If you are tempted to notify admin but Check_Duplicates says no duplicates → instead reply: "System is clean – no duplicate job postings detected."
+
+     **EXTRA HARD STOP CONDITIONS:**
+     - If you have already called Notify_Admin once in this conversation turn → **you are forbidden** from calling it (or Check_Duplicates) again.
+     - If the last three tool results were identical or unproductive (e.g. repeated "No duplicates found"), **force final answer** starting with: "No action required: "
+
+     **RECRUITER WORKFLOW ENFORCEMENT:**
+     - For candidate reports, **always follow the exact 6-step sequence** – do not skip or reorder.
+     - If Fetch_Jobs_API returns 0 or no ID, **immediately try Vector_Search** with the same query to find IDs.
+     - **Do not call Fetch_Applications or Fetch_Users without a valid numeric ID** from prior tool.
+     - After Fetch_Users, **must generate final report** – no more tools.
+
+     **ERROR RECOVERY:**
+     - If a tool returns an error (e.g., invalid ID), **do not retry the same call** – go back to finding the ID.
+     """),
+
+    ("human", "{input}"),
+    ("placeholder", "{agent_scratchpad}"),
+])
     
     agent = create_tool_calling_agent(llm, tools, prompt)
     agent_executor = AgentExecutor(
@@ -474,7 +476,7 @@ def run_agent(request: AIQueryRequest):
         verbose=True, 
         return_intermediate_steps=True,
         max_execution_time=25,
-        max_iterations=3,     
+        max_iterations=5,     
         handle_parsing_errors=True,
     )
     
